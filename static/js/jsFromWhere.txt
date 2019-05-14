@@ -1,0 +1,3 @@
+http://apps.bdimg.com/libs/jquery/1.10.2/jquery.min.js
+https://d3js.org/d3.v3.min.js
+https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js

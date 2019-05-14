@@ -1,0 +1,33 @@
+某公司有哪些注册人员？
+某公司有哪些项目？
+某公司有哪些资质？
+某项目有哪些公司参与？
+哪些公司有某资质？
+某人有哪些证书？
+哪些公司有合作关系？
+<file:///D:/graduation_design/Demo/kg4construction5_9/vocab/people_major>
+PREFIX : <file:///D:/graduation_design/Demo/kg4construction5_9/vocab/>
+
+
+PREFIX : <file:///D:/graduation_design/Demo/kg4construction5_9/vocab/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?peopleCategory ?peopleName ?compName ?projectName WHERE {
+?project :project_name_'舒迪安细胞治疗技术车间装修工程'.
+?project :project_name_ ?projectName.
+?project :project_name_ ?projectName.
+?project :project_id ?projectId.
+?companydoproject :companydoproject_id ?projectId.
+?companydoproject :companydoproject_compName ?compName.
+?company :company_name_ ?compName.
+?company :company_name_ ?compName.
+?company :company_name_ ?compName.
+?peopleregistercompany :peopleregistercompany_compName ?compName.
+?peopleregistercompany :peopleregistercompany_id_p ?peopleIdp.
+?people :people_id_p ?peopleIdp.
+?people :people_name_ ?peopleName.
+?people :people_category '注册造价工程师'.
+?people :people_category ?peopleCategory.
+
+}

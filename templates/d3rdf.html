@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>D3RDF : Curve</title>
+	<meta name="author" content="Rathachai CHAWUTHAI">
+
+	<style type="text/css">
+		.node {
+		  stroke: #fff;
+		  fill:#ddd;
+		  stroke-width: 1.5px;
+		}
+
+		.link {
+		  fill: none;
+		  stroke: #999;
+		  stroke-opacity: .6;
+		  stroke-width: 1px;
+		}
+
+		marker {
+			stroke: #999;
+			fill:rgba(124,240,10,0);
+		}
+
+		.node-text {
+		  font: 11px sans-serif;
+		  fill:black;
+		}
+
+		.link-text {
+		  font: 9px sans-serif;
+		  fill:grey;
+		}
+
+		svg{
+			/*border:1px solid black;*/
+            /*margin:0 0 0 100px;*/
+            width:1000px;
+            height:1000px
+		}
+	</style>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script>
+		function filterNodesById(nodes,id){
+			return nodes.filter(function(n) { return n.id === id; });
+		}
+
+		function filterNodesByType(nodes,value){
+			return nodes.filter(function(n) { return n.type === value; });
+		}
+
+		function triplesToGraph(triples){
+
+			svg.html("");
+			//Graph
+			var graph={nodes:[], links:[], triples:[]};
+
+			//Initial Graph from triples
+			triples.forEach(function(triple){
+				var subjId = triple.subject;
+				var predId = triple.predicate;
+				var objId = triple.object;
+
+				var subjNode = filterNodesById(graph.nodes, subjId)[0];
+				var objNode  = filterNodesById(graph.nodes, objId)[0];
+
+				if(subjNode==null){
+					subjNode = {id:subjId, label:subjId, weight:1, type:"node"};
+					graph.nodes.push(subjNode);
+				}
+
+				if(objNode==null){
+					objNode = {id:objId, label:objId, weight:1, type:"node"};
+					graph.nodes.push(objNode);
+				}
+
+				var predNode = {id:predId, label:predId, weight:1, type:"pred"} ;
+				graph.nodes.push(predNode);
+
+				var blankLabel = "";
+
+				graph.links.push({source:subjNode, target:predNode, predicate:blankLabel, weight:1});
+				graph.links.push({source:predNode, target:objNode, predicate:blankLabel, weight:1});
+
+				graph.triples.push({s:subjNode, p:predNode, o:objNode});
+
+			});
+
+			return graph;
+		}
+
+
+		function update(){
+			// ==================== Add Marker ====================
+			svg.append("svg:defs").selectAll("marker")
+			    .data(["end"])
+			  .enter().append("svg:marker")
+			    .attr("id", String)
+			    .attr("viewBox", "0 -5 10 10")
+			    .attr("refX", 30)
+			    .attr("refY", -0.5)
+			    .attr("markerWidth", 6)
+			    .attr("markerHeight", 6)
+			    .attr("orient", "auto")
+			  .append("svg:polyline")
+			    .attr("points", "0,-5 10,0 0,5")
+			    ;
+
+			// ==================== Add Links ====================
+			 var links = svg.selectAll(".link")
+								.data(graph.triples)
+								.enter()
+								.append("path")
+									.attr("marker-end", "url(#end)")
+									.attr("class", "link")
+							;
+
+			// ==================== Add Link Names =====================
+			var linkTexts = svg.selectAll(".link-text")
+		                .data(graph.triples)
+		                .enter()
+		                .append("text")
+							.attr("class", "link-text")
+							.text( function (d) { return d.p.label; })
+						;
+
+				//linkTexts.append("title")
+				//		.text(function(d) { return d.predicate; });
+
+			// ==================== Add Link Names =====================
+			var nodeTexts = svg.selectAll(".node-text")
+		                .data(filterNodesByType(graph.nodes, "node"))
+		                .enter()
+		                .append("text")
+							.attr("class", "node-text")
+							.text( function (d) { return d.label; })
+						;
+
+				//nodeTexts.append("title")
+				//		.text(function(d) { return d.label; });
+
+			// ==================== Add Node =====================
+			var nodes = svg.selectAll(".node")
+								.data(filterNodesByType(graph.nodes, "node"))
+								.enter()
+								.append("circle")
+									.attr("class", "node")
+									.attr("r",8)
+									.call(force.drag)
+							;//nodes
+
+			// ==================== Force ====================
+			force.on("tick", function() {
+				nodes
+					.attr("cx", function(d){ return d.x; })
+					.attr("cy", function(d){ return d.y; })
+					;
+
+				links
+					.attr("d", function(d) {
+						  return "M" 	+ d.s.x + "," + d.s.y
+										+ "S" + d.p.x + "," + d.p.y
+										+ " " + d.o.x + "," + d.o.y;
+						})
+					;
+
+				nodeTexts
+					.attr("x", function(d) { return d.x + 12 ; })
+					.attr("y", function(d) { return d.y + 3; })
+					;
+
+
+				linkTexts
+					.attr("x", function(d) { return 4 + (d.s.x + d.p.x + d.o.x)/3  ; })
+					.attr("y", function(d) { return 4 + (d.s.y + d.p.y + d.o.y)/3 ; })
+					;
+			});
+
+			// ==================== Run ====================
+			force
+		      .nodes(graph.nodes)
+		      .links(graph.links)
+			  .charge(-500)
+			  .linkDistance(50)
+		      .start()
+			  ;
+		}
+
+
+	</script>
+</head>
+<body style="margin:20px;">
+  <h1>Visualizing RDF using D3 : Curve Links</h1>
+  <div id="svg-body" class="panel-body" ></div>
+  <script>
+  	var triples = [
+  			{subject:"1",   predicate:"经营范围",   object:"码头和其他港口设施经营;在港区内从事货物装卸、驳运、仓储经营..."},
+{subject:"1",   predicate:"注册时间",   object:"2003-01-03"},
+{subject:"1",   predicate:"注册资金",   object:"592592.8614万人民币"},
+{subject:"1",   predicate:"法人",   object:"宣国宝"},
+{subject:"1",   predicate:"名称",   object:"唐山港集团股份有限公司"},
+{subject:"2",   predicate:"经营范围",   object:"对旅游业、房地产业、公共设施管理业、建筑业..."},
+{subject:"2",   predicate:"注册时间",   object:"2015-01-22"},
+{subject:"2",   predicate:"注册资金",   object:"30000万人民币"},
+{subject:"2",   predicate:"法人",   object:"关小冬"},
+{subject:"2",   predicate:"名称",   object:"承德创元投资集团有限责任公司"},
+{subject:"3",   predicate:"经营范围",   object:"煤化工产品、精细化工产品的研发、生产及销售;煤矿专用设备、仪..."},
+{subject:"3",   predicate:"注册时间",   object:"2012-11-14"},
+{subject:"3",   predicate:"注册资金",   object:"5000万人民币"},
+{subject:"3",   predicate:"法人",   object:"宋建芳"},
+{subject:"3",   predicate:"名称",   object:"邢台新兴通泰矿业集团有限公司"}
+  		];
+
+	var svg = d3.select("#svg-body").append("svg")
+				.attr("width", 800)
+				.attr("height", 600)
+				;
+
+	var force = d3.layout.force().size([800, 600]);
+
+	var graph = triplesToGraph(triples);
+
+	update();
+		function sethidden(){
+		    /*$(#svg-body).hidden=true;*/
+            /*$(#svg-body).hidden=false;*/
+		    document.getElementById("svg-body").style.left='1600px';
+            document.getElementById("svg-body").style.display="none";//隐藏
+            /*document.getElementById("svg-body").style.display="";//显示*/
+        }
+
+        sethidden();
+  </script>
+
+
+  <footer style="margin-top:40px; padding:20px; height:50px; border-top:1px solid #eee; background:#fafafa; text-align:center">
+	By: <strong>Rathachai Chawuthai</strong>
+	<br/>
+	<a target="_blank" href="https://github.com/Rathachai">GitHub</a> | <a target="_blank" href="https://www.linkedin.com/in/rathachai">LinkedIn</a>
+  </footer>
+
+</body>
